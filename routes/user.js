@@ -44,7 +44,7 @@ router.post('/signin', passport.authenticate('local.signin', {
 module.exports = router;
 
 function isLoggedIn(req, res, next) {
-  if(req.isAuthenticated()) {
+  if(req.isAuthenticated()) {             //isAuthenticated 是 passport的method
     return next();
   }
   res.redirect('/');

@@ -37,7 +37,7 @@ app.use(passport.session());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(function(req, res, next) {
-  res.locals.login = req.isAuthenticated();
+  res.locals.login = req.isAuthenticated();     //isAuthenticated 是 passport的method
   next();
 });
 
