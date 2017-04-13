@@ -3,6 +3,7 @@ var router = express.Router();
 var csrf = require('csurf');
 
 var Product = require('../models/product');
+var Cart = require('../models/cart');
 
 var csrfProtection = csrf();
 router.use(csrfProtection);
@@ -19,6 +20,20 @@ router.get('/', function(req, res, next) {
   });
 });
 
+router.get('/add-to-cart/:id', (req, res) => {
+  var productId = req.params.id;
+  var cart = new Cart(req.session.cart ? req.session.cart : {});
+
+  Product.findById(productId, (err, product) => {
+    if(err) {
+      return res.redirect('/');
+    }
+    cart.add(product, product.id);
+    req.session.cart = cart;
+    console.log(req.session.cart);
+    res.redirect('/');
+  });
+});
 
 
 module.exports = router;

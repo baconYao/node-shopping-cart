@@ -10,6 +10,7 @@ const session = require('express-session');
 const passport = require('passport');
 const flash = require('connect-flash');
 const validator = require('express-validator');
+const MongoStore = require('connect-mongo')(session);
 
 const index = require('./routes/index');
 const userRoutes = require('./routes/user');
@@ -30,7 +31,16 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(validator());
 app.use(cookieParser());
-app.use(session({secret: 'baconyaosecret', resave: false, saveUninitialized: false}));
+app.use(session({
+  secret: 'baconyaosecret', resave: false, 
+  saveUninitialized: false,
+  store: new MongoStore({
+    mongooseConnection: mongoose.connection
+  }),
+  cookie: {
+    maxAge: 180 * 60 * 1000
+  }
+}));
 app.use(flash());
 app.use(passport.initialize());
 app.use(passport.session());
@@ -38,6 +48,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(function(req, res, next) {
   res.locals.login = req.isAuthenticated();     //isAuthenticated 是 passport的method
+  res.locals.session = req.session;
   next();
 });
 
