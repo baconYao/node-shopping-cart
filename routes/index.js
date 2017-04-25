@@ -4,6 +4,7 @@ var csrf = require('csurf');
 
 var Product = require('../models/product');
 var Cart = require('../models/cart');
+var Order = require('../models/order');
 
 var csrfProtection = csrf();
 router.use(csrfProtection);
@@ -75,9 +76,20 @@ router.post('/checkout', function(req, res, next) {
         req.flash('error', err.message);
         return res.redirect('/checkout');
       }
-      req.flash('success', 'Successfully bought product!');
-      req.session.cart = null;
-      res.redirect('/');
+      var order = new Order({
+        user: req.user,
+        cart: cart,
+        address: req.body.address,
+        name: req.body.name,
+        paymentId: charge.id
+      });
+
+      order.save(function(err, result) {
+        req.flash('success', 'Successfully bought product!');
+        req.session.cart = null;
+        res.redirect('/');
+      });
+      
   });
 });
 
