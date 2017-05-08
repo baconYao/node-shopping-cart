@@ -2,12 +2,26 @@ var express = require('express');
 var router = express.Router();
 var csrf = require('csurf');
 var passport = require('passport');
+var Order = require('../models/order');
+var Cart = require('../models/cart');
 
 var csrfProtection = csrf();
 router.use(csrfProtection);
 
 router.get('/profile', isLoggedIn, function(req, res, next) {
-  res.render('user/profile');
+  // console.log("Profile: "+req.user);
+  Order.find({user: req.user}, function(err, orders) {
+    if(err) {
+      return res.write('Error!');
+    }
+    // console.log(orders);
+    var cart;
+    orders.forEach(function(order) {
+      cart = new Cart(order.cart);
+      order.items = cart.generateArray();
+    });
+    res.render('user/profile', {orders: orders});
+  });
 });
 
 router.get('/logout', isLoggedIn, function(req, res, next) {
@@ -25,10 +39,18 @@ router.get('/signup', (req, res, next) => {
 });
 
 router.post('/signup',  passport.authenticate('local.signup', {
-  successRedirect: '/user/profile',
+  // successRedirect: '/user/profile',
   failureRedirect: '/user/signup',
   failureFlash: true
-}));
+}) , function(req, res, next) {
+  if(req.session.oldUrl) {
+    var oldUrl = req.session.oldUrl;
+    req.session.oldUrl = null;
+    res.redirect(oldUrl);
+  } else {
+    res.redirect('/user/profile');
+  }
+});
 
 router.get('/signin', (req, res, next) => {
   var messages = req.flash('error');
@@ -36,14 +58,23 @@ router.get('/signin', (req, res, next) => {
 });
 
 router.post('/signin', passport.authenticate('local.signin', {
-  successRedirect: '/user/profile',
+  // successRedirect: '/user/profile',
   failureRedirect: '/user/signin',
   failureFlash: true
-}));
+}), function(req, res, next) {
+  if(req.session.oldUrl) {
+    var oldUrl = req.session.oldUrl;
+    req.session.oldUrl = null;
+    res.redirect(oldUrl);
+  } else {
+    res.redirect('/user/profile');
+  }
+});
 
 module.exports = router;
 
 function isLoggedIn(req, res, next) {
+  console.log("isLoggedIn: "+req);
   if(req.isAuthenticated()) {             //isAuthenticated 是 passport的method
     return next();
   }
